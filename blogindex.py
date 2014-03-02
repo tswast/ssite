@@ -78,7 +78,9 @@ def summary_from_path(path, date):
             doc.body.find_all(
                 text=True)
             ))[:512]
-    return Summary(title, date, unicode(path, "utf8"), description)
+    return Summary(
+            title, date, unicode("{0}/".format(os.path.dirname(path)), "utf8"),
+            description)
 
 
 
