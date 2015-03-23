@@ -66,6 +66,10 @@ def summary_from_path(path, date):
         doc = BeautifulSoup(f, "html5lib")
         title = doc.title.string
 
+        if doc.body is None:
+            print "Skipping", path, "because has no body"
+            return None
+
         # Destroy the header from the parse tree,
         # since we don't want it in the summary.
         header = doc.body.find(
@@ -88,7 +92,9 @@ def summary_from_path(path, date):
 
 def summaries_from_paths(paths):
     for path in paths:
-        yield summary_from_path(*path)
+        summary = summary_from_path(*path)
+        if summary is not None:
+            yield summary
 
 
 def load_template(path):
