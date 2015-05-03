@@ -25,7 +25,17 @@ import re
 import sys
 
 from bs4 import BeautifulSoup
+from bs4 import Comment
 from jinja2 import Template
+
+
+NON_TEXT_TAGS = frozenset(["script", "style"])
+
+
+def is_text_tag(tag):
+    if isinstance(tag, Comment):
+        return False
+    return tag.parent.name not in NON_TEXT_TAGS
 
 
 def blogfiles(initial_path):
@@ -79,8 +89,7 @@ def summary_from_path(path, date):
         description = u" ".join((
             s.string
             for s in
-            doc.body.find_all(
-                text=True)
+            doc.body.find_all(text=is_text_tag)
             ))[:512]
     return Summary(
             title, date, unicode("{0}/".format(os.path.dirname(path)), "utf8"),
