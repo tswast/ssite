@@ -86,32 +86,37 @@ def blogfiles(initial_path):
 
 
 Summary = collections.namedtuple("Summary", ["title", "date", "path", "description"])
+
+
 def summary_from_path(path, date):
     with codecs.open(path, "rb", "utf8") as f:
-        doc = BeautifulSoup(f, "html5lib")
-        title = doc.title.string
+        return extract_summary(path, date, f)
 
-        if doc.body is None:
-            print "Skipping", path, "because has no body"
-            return None
 
-        # Destroy the header from the parse tree,
-        # since we don't want it in the summary.
-        header = doc.body.find(
-                attrs={"id": lambda s: s == "content-header"})
-        if header != None:
-            header.decompose()
-        description = u" ".join((
-            s.string
-            for s in
-            doc.body.find_all(text=is_text_tag)
-            ))[:512]
+def extract_summary(path, date, markup):
+    doc = BeautifulSoup(markup, "html5lib")
+    if doc.title is None:
+        print "Skipping", path, "because missing title"
+        return None
+    title = doc.title.string
+    if doc.body is None:
+        print "Skipping", path, "because has no body"
+        return None
+
+    # Destroy the header from the parse tree,
+    # since we don't want it in the summary.
+    header = doc.body.find(
+            attrs={"id": lambda s: s == "content-header"})
+    if header != None:
+        header.decompose()
+    description = u" ".join((
+        s.string
+        for s in
+        doc.body.find_all(text=is_text_tag)
+        ))[:512]
     return Summary(
-            title, date, unicode("{0}/".format(os.path.dirname(path)), "utf8"),
-            description)
-
-
-
+        title, date, unicode("{0}/".format(os.path.dirname(path)), "utf8"),
+        description)
 
 
 def summaries_from_paths(paths):
@@ -142,5 +147,3 @@ def main(path):
 
 if __name__ == "__main__":
     main(sys.argv[1])
-
-
