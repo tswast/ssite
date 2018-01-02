@@ -32,6 +32,8 @@ the HTML document is actually the title of the article.
 Maybe I should call this locoloco.py : The Little Engine that Doesn't?
 """
 
+from __future__ import print_function
+
 import codecs
 import collections
 import datetime
@@ -96,11 +98,11 @@ def summary_from_path(path, date):
 def extract_summary(path, date, markup):
     doc = BeautifulSoup(markup, "html5lib")
     if doc.title is None:
-        print "Skipping", path, "because missing title"
+        print("Skipping {} because missing title".format(path))
         return None
     title = doc.title.string
     if doc.body is None:
-        print "Skipping", path, "because has no body"
+        print("Skipping {} because has no body".format(path))
         return None
 
     # Destroy the header from the parse tree,
@@ -115,7 +117,7 @@ def extract_summary(path, date, markup):
         doc.body.find_all(text=is_text_tag)
         ))[:512]
     return Summary(
-        title, date, unicode("{0}/".format(os.path.dirname(path)), "utf8"),
+        title, date, u"{0}/".format(os.path.dirname(path)),
         description)
 
 
