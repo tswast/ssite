@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# Copyright 2017, The Locoloco Authors.
-# 
+# Copyright 2017, The Ssite Authors.
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -69,11 +69,18 @@ def cleanhtml(input_, output=None):
             f.write(html_clean)
 
 
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description=__doc__)
+def add_cli_args(parser):
     parser.add_argument('input', help='path to html document to clean')
     parser.add_argument(
         '-o', '--output', help='path to output cleaned html document')
-    args = parser.parse_args()
+
+
+def main(args):
     cleanhtml(args.input, output=args.output)
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    add_cli_args(parser)
+    args = parser.parse_args()
+    main(args)

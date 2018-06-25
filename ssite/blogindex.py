@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# Copyright 2013, The Locoloco Authors. All Rights Reserved.
-# 
+# Copyright 2013, The Ssite Authors.
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""blogindex.py : Create an index for a plain-HTML blog.
+"""blogindex creates an index for a plain-HTML blog.
 
 By plain-HTML, I mean that each entry is a stand-alone document. It is
 not a full static blog generator like Octopress/Jekyll or Hyde.
@@ -55,10 +55,11 @@ def is_text_tag(tag):
     return tag.parent.name not in NON_TEXT_TAGS
 
 
-def blogfiles(initial_path):
-    # Avoid premature optimization: match all files in the
-    # subdirectory to see if they match.
-    pattern = re.compile(r"([0-9]+)/([0-9]+)/([0-9]+)/.*/index.html$")
+def flatten_dir(initial_path):
+    """Return a flattened list of files in ``initial_path`` directory.
+
+    Output paths are relative to ``initial_path``.
+    """
 
     for root, dirs, files in os.walk(initial_path):
         # We can modify "dirs" in-place to skip paths that don't
@@ -71,27 +72,37 @@ def blogfiles(initial_path):
             if ignored_dir in dirs_set:
                 dirs.remove(ignored_dir)
 
-        for file in files:
-            # We try to match the pattern, skipping the initial,
-            # configurable, search directory.
-            current_path = os.path.join(root, file)[len(initial_path)+1:]
-            match = pattern.match(current_path)
-            if match:
-                year, month, day = match.groups()
-                yield (
-                        current_path,
-                        datetime.datetime(
-                            int(year, base=10),
-                            int(month, base=10),
-                            int(day, base=10)
-                ))
+        for file_path in files:
+            relative_root = root[len(initial_path) + 1:]
+            yield os.path.join(relative_root, file_path)
 
 
-Summary = collections.namedtuple("Summary", ["title", "date", "path", "description"])
+def blogfiles(filepaths):
+    # Avoid premature optimization: match all files in the
+    # subdirectory to see if they match.
+    pattern = re.compile(r"([0-9]+)/([0-9]+)/([0-9]+)/.*/index.html$")
+
+    for filepath in filepaths:
+        # Try to match the pattern to find blog posts.
+        match = pattern.match(filepath)
+        if match:
+            year, month, day = match.groups()
+            yield (
+                    filepath,
+                    datetime.datetime(
+                        int(year, base=10),
+                        int(month, base=10),
+                        int(day, base=10))
+            )
 
 
-def summary_from_path(path, date):
-    with codecs.open(path, "rb", "utf8") as f:
+Summary = collections.namedtuple(
+    "Summary", ["title", "date", "path", "description"])
+
+
+def summary_from_path(root, path, date):
+    filepath = os.path.join(root, path)
+    with codecs.open(filepath, "rb", "utf8") as f:
         return extract_summary(path, date, f)
 
 
@@ -109,7 +120,7 @@ def extract_summary(path, date, markup):
     # since we don't want it in the summary.
     header = doc.body.find(
             attrs={"id": lambda s: s == "content-header"})
-    if header != None:
+    if header is not None:
         header.decompose()
     description = u" ".join((
         s.string
@@ -121,9 +132,9 @@ def extract_summary(path, date, markup):
         description)
 
 
-def summaries_from_paths(paths):
+def summaries_from_paths(root, paths):
     for path in paths:
-        summary = summary_from_path(*path)
+        summary = summary_from_path(root, *path)
         if summary is not None:
             yield summary
 
@@ -134,10 +145,14 @@ def load_template(path):
         return Template(u"".join(f.readlines()))
 
 
-def main(path):
-    import pprint
+def main(args):
+    path = args.blog_dir
     t = load_template(path)
-    posts = [s for s in summaries_from_paths(blogfiles(path))]
+    blog_paths = blogfiles(flatten_dir(path))
+    posts = [
+        summary
+        for summary in summaries_from_paths(path, blog_paths)
+    ]
 
     # Sort the posts by date.
     # I reverse it because I want most-recent posts to appear first.
@@ -147,5 +162,13 @@ def main(path):
     with codecs.open(os.path.join(path, "index.html"), "wb", "utf8") as f:
         f.write(t.render(posts=posts))
 
+
+def add_cli_args(parser):
+    parser.add_argument('blog_dir', help='path to root of a blog directory')
+
+
 if __name__ == "__main__":
-    main(sys.argv[1])
+    parser = argparse.ArgumentParser(description=__doc__)
+    add_cli_args(parser)
+    args = parser.parse_args()
+    main(args)
