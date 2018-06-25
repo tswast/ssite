@@ -19,6 +19,7 @@ import sys
 
 from . import blogindex
 from . import cleanhtml
+from . import rmblock
 
 
 def main():
@@ -33,11 +34,17 @@ def main():
         'cleanhtml', help=cleanhtml.__doc__)
     cleanhtml.add_cli_args(cleanhtml_parser)
 
+    rmblock_parser = subparsers.add_parser(
+        'rmblock', help=rmblock.__doc__)
+    rmblock.add_cli_args(rmblock_parser)
+
     args = parser.parse_args()
     if args.command == 'cleanhtml':
         cleanhtml.main(args)
     elif args.command == 'blogindex':
         blogindex.main(args)
+    elif args.command == 'rmblock':
+        rmblock.main(args)
     else:
         print(
             'Got unknown command "{}".'.format(args.command),
