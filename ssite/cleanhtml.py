@@ -27,46 +27,103 @@ something like Pandoc to convert to HTML5.
 from __future__ import print_function
 
 import argparse
-import codecs
+import re
+import textwrap
+import urllib.parse
 
 import bs4
 
 
+def extract_redirect(href):
+    url = urllib.parse.urlsplit(href)
+
+    if url.netloc == 'www.google.com':
+        query = urllib.parse.parse_qs(url.query)
+        return query.get('q')
+
+    # Could not find redirect.
+    return None
+
+
+def unredirect_links(a_tag):
+    if not a_tag['href']:
+        return
+
+    redirect = extract_redirect(a_tag.get_attribute_list('href')[0])
+    if redirect:
+        a_tag['href'] = redirect
+
+
+def remove_html_cruft(text):
+    soup = bs4.BeautifulSoup(text, 'html.parser')
+
+    # Loop until we have cleaned up all tags. We can't do it in a single
+    # pass since we are modifying the descendents tree as we go.
+    isnotclean = True
+    while isnotclean:
+        isnotclean = False
+        for tag in soup.descendants:
+            if isinstance(tag, bs4.element.NavigableString):
+                # Wrap text.
+                text = tag.string
+                wrapped = textwrap.fill(text, width=80)
+                if text != wrapped:
+                    tag.string.replace_with(wrapped)
+                    isnotclean = True
+                continue
+
+            # Skip attributes.
+            if not isinstance(tag, bs4.element.Tag):
+                continue
+
+            # Remove unwanted tags.
+            # Remove empty paragraphs.
+            if tag.name == 'p' and not tag.contents:
+                tag.decompose()
+                isnotclean = True
+                continue
+            # Remove any style elements.
+            if tag.name == 'style':
+                tag.decompose()
+                isnotclean = True
+                continue
+            # Remove any span elements.
+            if tag.name == 'span':
+                tag.unwrap()
+                isnotclean = True
+                continue
+
+            # Clean up desired tags.
+            # Clean up links.
+            if tag.name == 'a':
+                unredirect_links(tag)
+
+            # Remove any styles or classes.
+            del tag['id']
+            del tag['class']
+            del tag['style']
+
+    return soup.prettify()
+
+
+def remove_closing_tags(text):
+    text = re.sub(r'<p>\s*', '<p>', text)
+    return re.sub(r'\s*</p>', '\n', text)
+
+
 def cleanhtml(input_, output=None):
-    with codecs.open(input_, 'r', 'utf8') as f:
+    with open(input_, 'r', encoding='utf-8') as f:
         html_doc = f.read()
-        soup = bs4.BeautifulSoup(html_doc, 'html.parser')
 
-        # Loop until we have cleaned up all tags. We can't do it in a single
-        # pass since we are modifying the descendents tree as we go.
-        isnotclean = True
-        while isnotclean:
-            isnotclean = False
-            for tag in soup.descendants:
-                if not isinstance(tag, bs4.element.Tag):
-                    continue
-                # Remove any style elements.
-                if tag.name == 'style':
-                    tag.decompose()
-                    isnotclean = True
-                    continue
-                # Remove any span elements.
-                if tag.name == 'span':
-                    tag.unwrap()
-                    isnotclean = True
-                    continue
-                # Remove any styles or classes.
-                del tag['id']
-                del tag['class']
-                del tag['style']
+    html_clean = remove_html_cruft(html_doc)
+    html_clean = remove_closing_tags(html_clean)
 
-        html_clean = soup.prettify()
-        if output is None:
-            print(html_clean)
-            return
+    if output is None:
+        print(html_clean)
+        return
 
-        with codecs.open(output, 'w', 'utf8') as f:
-            f.write(html_clean)
+    with open(output, 'w', encoding='utf-8') as f:
+        f.write(html_clean)
 
 
 def add_cli_args(parser):
