@@ -18,12 +18,12 @@
 import datetime
 import os.path
 
-from ssite import blogindex
+import ssite.index
 
 
 def test_flatten_dir():
     test_dir = os.path.dirname(os.path.abspath(__file__))
-    filepaths = tuple(sorted(blogindex.flatten_dir(
+    filepaths = tuple(sorted(ssite.index.flatten_dir(
         os.path.join(test_dir, 'data', 'testblog'))))
     assert filepaths == (
         '2012/01/01/index.html',
@@ -35,18 +35,18 @@ def test_flatten_dir():
 
 
 def test_extract_summary_missing_title_returns_none():
-    assert blogindex.extract_summary(
+    assert ssite.index.extract_summary(
             "some/path",
             datetime.datetime(2016, 5, 5),
             "<!DOCTYPE html>Hello") is None
 
 
 def test_extract_summary_returns_summary():
-    assert blogindex.extract_summary(
+    assert ssite.index.extract_summary(
             "some/path/index.html",
             datetime.datetime(2016, 5, 5),
             "<!DOCTYPE html><title>Hello</title>Some beginning text."
-            ) == blogindex.Summary(
+            ) == ssite.index.Summary(
                     "Hello",
                     datetime.datetime(2016, 5, 5),
                     u"some/path/",

@@ -59,10 +59,3 @@ def add_cli_args(parser):
     parser.add_argument('end_regex', help='regex indicating end of a block')
     parser.add_argument(
         'content_path', help='path file(s) to update', nargs='+')
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description=__doc__)
-    add_cli_args(parser)
-    args = parser.parse_args()
-    main(args)

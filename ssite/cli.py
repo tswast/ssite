@@ -17,8 +17,8 @@ from __future__ import print_function
 import argparse
 import sys
 
-from . import blogindex
-from . import cleanhtml
+from . import index
+from . import clean
 from . import rmblock
 
 
@@ -26,24 +26,24 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     subparsers = parser.add_subparsers(title='commands', dest='command')
 
-    blogindex_parser = subparsers.add_parser(
-        'blogindex', help=blogindex.__doc__)
-    blogindex.add_cli_args(blogindex_parser)
+    index_parser = subparsers.add_parser(
+        'index', help=index.__doc__)
+    index.add_cli_args(index_parser)
 
-    cleanhtml_parser = subparsers.add_parser(
-        'cleanhtml', help=cleanhtml.__doc__)
-    cleanhtml.add_cli_args(cleanhtml_parser)
+    clean_parser = subparsers.add_parser(
+        'clean', help=clean.__doc__)
+    clean.add_cli_args(clean_parser)
 
     rmblock_parser = subparsers.add_parser(
-        'rmblock', help=rmblock.__doc__)
+        'beta_rmblock', help=rmblock.__doc__)
     rmblock.add_cli_args(rmblock_parser)
 
     args = parser.parse_args()
-    if args.command == 'cleanhtml':
-        cleanhtml.main(args)
-    elif args.command == 'blogindex':
-        blogindex.main(args)
-    elif args.command == 'rmblock':
+    if args.command == 'clean':
+        clean.main(args)
+    elif args.command == 'index':
+        index.main(args)
+    elif args.command == 'beta_rmblock':
         rmblock.main(args)
     else:
         print(

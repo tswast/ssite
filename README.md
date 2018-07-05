@@ -12,10 +12,10 @@ pip install --upgrade ssite
 
 ## Usage
 
-`ssite blogindex` generates an index file for a collection of timestamped
+`ssite index` generates an index file for a collection of timestamped
 HTML documents.
 
-`ssite cleanhtml` removes `style`, `class`, and `id`, `<span>` and other
+`ssite clean` removes `style`, `class`, and `id`, `<span>` and other
 messy markup from an HTML document.
 
 ## License

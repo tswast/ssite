@@ -15,13 +15,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""cleanhtml removes all styles and class attributes from an HTML file.
+"""A cleaner to remove all styles and class attributes from an HTML file.
 
 I use this to clean up exported HTML files from Google Docs, where I draft blog
 posts. I want to keep the HTML in my actual blog as simple as possible.
-
-Note: BeautifulSoup outputs XHTML. You might want to run this output through
-something like Pandoc to convert to HTML5.
 """
 
 from __future__ import print_function

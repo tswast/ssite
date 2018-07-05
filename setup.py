@@ -19,7 +19,7 @@ description = (
     'Ssite is not a static site generator. '
     'It is a collection of scripts to maintain a static site.'
 )
-version = '0.1.0'
+version = '0.2.0dev1'
 
 
 with open('README.md', 'r') as fh:
