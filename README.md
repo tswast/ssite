@@ -14,7 +14,7 @@ pip install --upgrade ssite
 
 ## Principles
 
-* Amend, don't generate.
+* Enhance; don't generate.
 
 Ssite works directly with the source and never creates separate build
 directories. The source of your static site is always publishable without
