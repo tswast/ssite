@@ -25,6 +25,7 @@ from . import rmblock
 def _module_help(module):
     return module.__doc__.split('\n')[0]
 
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     subparsers = parser.add_subparsers(title='commands', dest='command')
