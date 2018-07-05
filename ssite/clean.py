@@ -15,10 +15,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""A cleaner to remove all styles and class attributes from an HTML file.
+"""Remove all styles and class attributes from an HTML file.
 
-I use this to clean up exported HTML files from Google Docs, where I draft blog
-posts. I want to keep the HTML in my actual blog as simple as possible.
+Use this to clean up exported HTML from Google Docs to keep the markup as
+simple as if it were hand-written.
 """
 
 from __future__ import print_function

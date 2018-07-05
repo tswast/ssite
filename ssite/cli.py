@@ -22,20 +22,21 @@ from . import clean
 from . import rmblock
 
 
+def _module_help(module):
+    return module.__doc__.split('\n')[0]
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     subparsers = parser.add_subparsers(title='commands', dest='command')
 
-    index_parser = subparsers.add_parser(
-        'index', help=index.__doc__)
+    index_parser = subparsers.add_parser('index', help=_module_help(index))
     index.add_cli_args(index_parser)
 
-    clean_parser = subparsers.add_parser(
-        'clean', help=clean.__doc__)
+    clean_parser = subparsers.add_parser('clean', help=_module_help(clean))
     clean.add_cli_args(clean_parser)
 
     rmblock_parser = subparsers.add_parser(
-        'beta_rmblock', help=rmblock.__doc__)
+        'beta_rmblock', help=_module_help(rmblock))
     rmblock.add_cli_args(rmblock_parser)
 
     args = parser.parse_args()

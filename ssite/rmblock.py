@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""rmblock removes specified text blocks from the contents of files."""
+"""Remove specified text blocks from the contents of files. (Beta)"""
 
 import re
 

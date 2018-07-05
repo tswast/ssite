@@ -15,19 +15,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""An index generator to create indexes for a plain-HTML blog.
+"""Create an index of time-ordered posts.
 
-By plain-HTML, I mean that each entry is a stand-alone document. It is
-not a full static blog generator like Octopress/Jekyll or Hyde.
-
-blogindex.py assumes certain conventions are used. Firstly, it assumes
-articles have a path of the form:
+A post in the indexed directory is expected to have a path of the form:
 
     year/month/day/title/index.html
 
-It knows that content in a block with id="content-header" should not be
-included in the preview text. Finally, it assumes the title element of
-the HTML document is actually the title of the article.
+Content in a block with id="content-header" is not included in the preview
+text. The title element of the HTML document is used as the the title of the
+post.
 """
 
 from __future__ import print_function
@@ -167,13 +163,13 @@ def add_cli_args(parser):
         '-o',
         '--output',
         help=(
-            'Where to write the index. '
+            'path to write the index. '
             'Default is index.html, relative to the indexed directory.'))
     parser.add_argument(
         '-t',
         '--template',
         help=(
-            'Which template to use to render the index. Default is '
-            'index.jinja2.html, relative to the indexed directory.'))
+            'path to index template. Default is index.jinja2.html, '
+            'relative to the indexed directory.'))
     parser.add_argument(
         'indexed_dir', help='path to root of a directory to be indexed')
