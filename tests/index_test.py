@@ -18,6 +18,8 @@
 import datetime
 import os.path
 
+import pytest
+
 import ssite.index
 
 
@@ -36,18 +38,101 @@ def test_flatten_dir():
 
 def test_extract_summary_missing_title_returns_none():
     assert ssite.index.extract_summary(
-            "some/path",
+            'some/path',
             datetime.datetime(2016, 5, 5),
-            "<!DOCTYPE html>Hello") is None
+            '<!DOCTYPE html>Hello') is None
 
 
 def test_extract_summary_returns_summary():
     assert ssite.index.extract_summary(
-            "some/path/index.html",
+            'some/path/index.html',
             datetime.datetime(2016, 5, 5),
-            "<!DOCTYPE html><title>Hello</title>Some beginning text."
+            '<!DOCTYPE html><title>Hello</title>Some beginning text.'
             ) == ssite.index.Summary(
-                    "Hello",
+                    'Hello',
                     datetime.datetime(2016, 5, 5),
-                    u"some/path/",
-                    "Some beginning text.")
+                    'some/path/',
+                    'Some beginning text.')
+
+
+@pytest.mark.parametrize('content,region_name,expected', [
+    (
+        """<!--START empty_block-->
+<!--END empty_block-->
+""",
+        'empty_block',
+        ('<!--START empty_block-->\n', '', '<!--END empty_block-->\n'),
+    ),
+    (
+        """<!--START ALLCAPS-->
+<!--END ALLCAPS-->
+""",
+        'ALLCAPS',
+        ('<!--START ALLCAPS-->\n', '', '<!--END ALLCAPS-->\n'),
+    ),
+    (
+        """<!--START ws_block-->
+
+<!--END ws_block-->
+""",
+        'ws_block',
+        ('<!--START ws_block-->\n', '\n', '<!--END ws_block-->\n'),
+    ),
+    (
+        """Lines
+at the start.
+
+<!--START search-->
+ Some more lines
+ live inside this block.
+<!--END search-->
+
+And lines at the end.
+""",
+        'search',
+        (
+            'Lines\nat the start.\n\n<!--START search-->\n',
+            ' Some more lines\n live inside this block.\n',
+            '<!--END search-->\n\nAnd lines at the end.\n',
+        ),
+    ),
+])
+def test_split_region(content, region_name, expected):
+    assert ssite.index.split_region(content, region_name) == expected
+
+@pytest.mark.parametrize('content,region_name,expected_error_message', [
+    (
+        """<!--START dup_start-->
+<!--START dup_start-->
+<!--END dup_start-->
+""",
+        'dup_start',
+        'Found duplicate start line "<!--START dup_start-->" at line 2.',
+    ),
+    (
+        """<!--START dup_end-->
+<!--END dup_end-->
+<!--END dup_end-->
+""",
+        'dup_end',
+        'Found duplicate end line "<!--END dup_end-->" at line 3.',
+    ),
+    (
+        """<!--START wrong_tag-->
+<!--END wrong_tag-->
+""",
+        'other_tag',
+        'Could not find start line "<!--START other_tag-->".',
+    ),
+    (
+        """<!--START missing_end-->
+<!--END not_the_correct_end-->
+""",
+        'missing_end',
+        'Could not find end line "<!--END missing_end-->".',
+    ),
+])
+def test_split_region_errors(content, region_name, expected_error_message):
+    with pytest.raises(ValueError) as excinfo:
+        ssite.index.split_region(content, region_name)
+    assert expected_error_message in str(excinfo.value)
