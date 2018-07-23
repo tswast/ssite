@@ -43,7 +43,7 @@ def extract_redirect(href):
 
 
 def unredirect_links(a_tag):
-    if not a_tag['href']:
+    if not a_tag.has_attr('href') or not a_tag['href']:
         return
 
     redirect = extract_redirect(a_tag.get_attribute_list('href')[0])
