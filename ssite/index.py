@@ -87,8 +87,8 @@ def blogfiles(filepaths):
             )
 
 
-Summary = collections.namedtuple(
-    'Summary', ['title', 'date', 'path', 'description'])
+HEntry = collections.namedtuple(
+    'HEntry', ['name', 'published', 'path', 'content'])
 
 
 def summary_from_path(root, path, date):
@@ -99,26 +99,34 @@ def summary_from_path(root, path, date):
 
 def extract_summary(path, date, markup):
     doc = bs4.BeautifulSoup(markup, 'html5lib')
-    if doc.title is None:
-        print(f'Skipping {path} because missing title')
-        return None
-    title = doc.title.string
-    if doc.body is None:
-        print(f'Skipping {path} because has no body')
+
+    # Find the first h-entry.
+    # Getting just the first h-entry skips any inline replies.
+    entry = doc.find(class_='h-entry')
+    if not entry:
+        print(f'Skipping {path} because missing h-entry')
         return None
 
-    # Destroy the header from the parse tree,
-    # since we don't want it in the summary.
-    header = doc.body.find(
-            attrs={'id': lambda s: s == 'content-header'})
-    if header is not None:
-        header.decompose()
-    description = ' '.join((
-        s.string
-        for s in
-        doc.body.find_all(text=is_text_tag)
-        ))[:512]
-    return Summary(title, date, f'{os.path.dirname(path)}/', description)
+    title_elem = entry.find(class_='p-name')
+    if not title_elem:
+        print(f'Skipping {path} because missing title')
+        return None
+    title = title_elem.string
+
+    content = None
+    content_elem = entry.find(class_='e-content')
+    if content_elem:
+        content = str(content_elem)
+    else:
+        content_elem = entry.find(class_='p-content')
+        if content_elem:
+            content = content_elem.string
+
+    if content is None:
+        print(f'Skipping {path} because has no e-content or p-content')
+        return None
+
+    return HEntry(title, date, f'{os.path.dirname(path)}/', content)
 
 
 def summaries_from_paths(root, paths):
@@ -206,30 +214,32 @@ def replace_region(contents, region_name, body):
 
 def main(args):
     indexed_dir = args.indexed_dir
-    template_path = args.template
-    if template_path is None:
-        template_path = os.path.join(indexed_dir, 'index.jinja2.html')
     index_path = args.index
     if index_path is None:
         index_path = os.path.join(indexed_dir, 'index.html')
 
+    template_path = args.template
+    if template_path is None:
+        template_path = '{}.jinja2'.format(index_path)
+
     jinja_template = load_template(template_path)
     blog_paths = blogfiles(flatten_dir(indexed_dir))
-    posts = [
-        summary
-        for summary in summaries_from_paths(indexed_dir, blog_paths)
+    entries = [
+        entry
+        for entry in summaries_from_paths(indexed_dir, blog_paths)
     ]
 
-    # Sort the posts by date.
+    # Sort the entries by date.
     # I reverse it because I want most-recent posts to appear first.
-    posts.sort(key=lambda post: post.date, reverse=True)
+    entries.sort(key=lambda entry: entry.published, reverse=True)
 
     # Update the index file by replacing the <!--START/END INDEX--> region.
     with open(index_path, 'r+', encoding='utf-8') as index_file:
         original_content = index_file.read()
-        new_index = jinja_template.render(posts=posts) + '\n'
+        new_index = jinja_template.render(entries=entries) + '\n'
         new_content = replace_region(original_content, 'INDEX', new_index)
         index_file.seek(0)
+        index_file.truncate(0)  # Delete existing contents.
         index_file.write(new_content)
 
 
