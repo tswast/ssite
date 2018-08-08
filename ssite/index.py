@@ -31,6 +31,7 @@ from __future__ import print_function
 import collections
 import datetime
 import os
+import os.path
 import re
 
 import bs4
@@ -38,6 +39,24 @@ import jinja2
 
 
 NON_TEXT_TAGS = frozenset(['script', 'style'])
+
+
+def calculate_absolute_url(prefix, root, content_path, path):
+    if path.startswith('/'):
+        return f'{prefix}{path[1:]}'
+
+    target_path = os.path.join(content_path, path)
+    relative_path = os.path.relpath(target_path, start=root)
+    if path.endswith('/'):
+        relative_path += '/'
+    return f'{prefix}{relative_path}'
+
+
+def replace_urls_with_absolute(prefix, root, content_path, content):
+    soup = bs4.BeautifulSoup(markup, 'html5lib')
+    links = soup.find_all('a')
+    for link in links:
+        pass
 
 
 def is_text_tag(tag):
@@ -111,12 +130,18 @@ def extract_summary(path, date, markup):
     if not title_elem:
         print(f'Skipping {path} because missing title')
         return None
-    title = title_elem.string
+
+    title = None
+    if (
+        'e-content' not in title_elem['class']
+        and 'p-content' not in title_elem['class']
+    ):
+        title = title_elem.string
 
     content = None
     content_elem = entry.find(class_='e-content')
     if content_elem:
-        content = str(content_elem)
+        content = ''.join(map(str, content_elem.children))
     else:
         content_elem = entry.find(class_='p-content')
         if content_elem:
@@ -188,7 +213,7 @@ def split_region(contents, region_name):
                 raise ValueError(
                     f'Found duplicate start line "{start_line}" at line '
                     f'{line_no + 1}.')
-            found_start= True
+            found_start = True
 
     # Couldn't find the region, so raise an error.
     if not found_start:
