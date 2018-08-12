@@ -35,6 +35,7 @@ import os.path
 import re
 
 import bs4
+import dateutil.parser
 import jinja2
 
 
@@ -57,6 +58,9 @@ def replace_urls_with_absolute(prefix, root, content_path, content):
     links = soup.find_all('a')
     for link in links:
         pass
+        # TODO: What if the link is to an anchor?
+    # TODO: Find all images and update those, too.
+    return str(soup)
 
 
 def is_text_tag(tag):
@@ -88,8 +92,8 @@ def flatten_dir(initial_path):
 
 
 def blogfiles(filepaths):
-    # Avoid premature optimization: match all files in the
-    # subdirectory to see if they match.
+    # Match all files in the subdirectory to see if they match the pattern for
+    # blog posts.
     pattern = re.compile(r'([0-9]+)/([0-9]+)/([0-9]+)/.*/index.html$')
 
     for filepath in filepaths:
@@ -137,6 +141,20 @@ def extract_summary(path, date, markup):
         and 'p-content' not in title_elem['class']
     ):
         title = title_elem.string
+
+    # It there is a published element, parse the datetime from that, otherwise,
+    # use the datetime from the filepath.
+    published_elem = entry.find(class_='dt-published')
+    published = None
+    if published_elem:
+        if published_elem.has_attr('datetime'):
+            published = dateutil.parser.parse(published_elem['datetime'])
+        else:
+            published = dateutil.parser.parse(published_elem.string)
+
+    if published and published.date() != date.date():
+        print(f'Warning: {path} path date doesn\'t match {published}.')
+    date = published or date
 
     content = None
     content_elem = entry.find(class_='e-content')
