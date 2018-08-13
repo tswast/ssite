@@ -42,24 +42,30 @@ import jinja2
 NON_TEXT_TAGS = frozenset(['script', 'style'])
 
 
-def calculate_absolute_url(prefix, root, content_path, path):
-    if path.startswith('/'):
-        return f'{prefix}{path[1:]}'
+def calculate_absolute_url(prefix, root, content_path, target_path):
+    # Already absolute?
+    if '://' in target_path:
+        return target_path
 
-    target_path = os.path.join(content_path, path)
-    relative_path = os.path.relpath(target_path, start=root)
-    if path.endswith('/'):
+    # Already site-relative?
+    if target_path.startswith('/'):
+        return f'{prefix}{target_path[1:]}'
+
+    fs_target_path = os.path.join(os.path.dirname(content_path), target_path)
+    relative_path = os.path.relpath(fs_target_path, start=root)
+    if target_path.endswith('/'):
         relative_path += '/'
     return f'{prefix}{relative_path}'
 
 
-def replace_urls_with_absolute(prefix, root, content_path, content):
-    soup = bs4.BeautifulSoup(markup, 'html5lib')
-    links = soup.find_all('a')
-    for link in links:
-        pass
-        # TODO: What if the link is to an anchor?
-    # TODO: Find all images and update those, too.
+def replace_urls_with_absolute(soup, prefix, root, content_path):
+    for link in soup.find_all('a'):
+        link['href'] = calculate_absolute_url(
+            prefix, root, content_path, link['href'])
+
+    for img in soup.find_all('img'):
+        img['src'] = calculate_absolute_url(
+            prefix, root, content_path, img['src'])
     return str(soup)
 
 
@@ -111,17 +117,18 @@ def blogfiles(filepaths):
 
 
 HEntry = collections.namedtuple(
-    'HEntry', ['name', 'published', 'path', 'content'])
+    'HEntry', ['name', 'published', 'path', 'content', 'summary', 'photos'])
 
 
-def summary_from_path(root, path, date):
-    filepath = os.path.join(root, path)
+def summary_from_path(site_root, index_root, path, date):
+    filepath = os.path.join(index_root, path)
     with open(filepath, 'r', encoding='utf-8') as fb:
-        return extract_summary(path, date, fb)
+        return extract_summary(site_root, index_root, filepath, date, fb)
 
 
-def extract_summary(path, date, markup):
+def extract_summary(site_root, index_root, path, date, markup):
     doc = bs4.BeautifulSoup(markup, 'html5lib')
+    replace_urls_with_absolute(doc, '/', site_root, path)
 
     # Find the first h-entry.
     # Getting just the first h-entry skips any inline replies.
@@ -169,12 +176,32 @@ def extract_summary(path, date, markup):
         print(f'Skipping {path} because has no e-content or p-content')
         return None
 
-    return HEntry(title, date, f'{os.path.dirname(path)}/', content)
+    summary = None
+    summary_elem = (
+        entry.find(class_='e-summary') or entry.find(class_='p-summary')
+    )
+    if summary_elem:
+        summary = ''.join(map(str, summary_elem.children))
+
+    # Find only direct children so as not to pick up photos from the h-card.
+    photo_elems = entry.find_all(class_='u-photo', recursive=False)
+    photos = []
+    for photo_elem in photo_elems:
+        photos.append({
+            'src': photo_elem['src'],
+            'alt': photo_elem['alt'] if photo_elem.has_attr('alt') else '',
+            'is_pixel_art': 'pixel-art' in photo_elem['class'],
+        })
+
+    relative_path = os.path.relpath(path, start=index_root)
+    return HEntry(
+        title, date, f'{os.path.dirname(relative_path)}/', content,
+        summary=summary, photos=photos)
 
 
-def summaries_from_paths(root, paths):
+def summaries_from_paths(site_root, index_root, paths):
     for path in paths:
-        summary = summary_from_path(root, *path)
+        summary = summary_from_path(site_root, index_root, *path)
         if summary is not None:
             yield summary
 
@@ -269,7 +296,8 @@ def main(args):
     blog_paths = blogfiles(flatten_dir(indexed_dir))
     entries = [
         entry
-        for entry in summaries_from_paths(indexed_dir, blog_paths)
+        for entry in summaries_from_paths(
+            os.getcwd(), indexed_dir, blog_paths)
     ]
 
     # Sort the entries by date.
