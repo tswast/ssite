@@ -30,6 +30,7 @@ from __future__ import print_function
 
 import collections
 import datetime
+import itertools
 import os
 import os.path
 import re
@@ -183,13 +184,18 @@ def extract_summary(site_root, index_root, path, date, markup):
     if summary_elem:
         summary = ''.join(map(str, summary_elem.children))
 
-    # Find only direct children so as not to pick up photos from the h-card.
-    photo_elems = entry.find_all(class_='u-photo', recursive=False)
+    photo_elems_root = entry.find_all(
+        class_='u-photo',
+        # Find only direct children so as not to pick up photos from the
+        # h-card.
+        recursive=False)
+    photo_elems_content = content_elem.find_all(class_='u-photo')
     photos = []
-    for photo_elem in photo_elems:
+    for photo_elem in itertools.chain(photo_elems_root, photo_elems_content):
         photos.append({
+            'id': photo_elem.attrs.get('id'),
             'src': photo_elem['src'],
-            'alt': photo_elem['alt'] if photo_elem.has_attr('alt') else '',
+            'alt': photo_elem.attrs.get('alt', ''),
             'is_pixel_art': 'pixel-art' in photo_elem['class'],
         })
 
