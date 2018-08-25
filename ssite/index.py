@@ -196,7 +196,7 @@ def extract_summary(site_root, index_root, path, date, markup):
             'id': photo_elem.attrs.get('id'),
             'src': photo_elem['src'],
             'alt': photo_elem.attrs.get('alt', ''),
-            'is_pixel_art': 'pixel-art' in photo_elem['class'],
+            'is_pixel_art': 'u-pixel-art' in photo_elem['class'],
         })
 
     relative_path = os.path.relpath(path, start=index_root)
