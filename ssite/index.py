@@ -30,14 +30,44 @@ from __future__ import print_function
 
 import collections
 import datetime
+import itertools
 import os
+import os.path
 import re
 
 import bs4
+import dateutil.parser
 import jinja2
 
 
 NON_TEXT_TAGS = frozenset(['script', 'style'])
+
+
+def calculate_absolute_url(prefix, root, content_path, target_path):
+    # Already absolute?
+    if '://' in target_path:
+        return target_path
+
+    # Already site-relative?
+    if target_path.startswith('/'):
+        return f'{prefix}{target_path[1:]}'
+
+    fs_target_path = os.path.join(os.path.dirname(content_path), target_path)
+    relative_path = os.path.relpath(fs_target_path, start=root)
+    if target_path.endswith('/'):
+        relative_path += '/'
+    return f'{prefix}{relative_path}'
+
+
+def replace_urls_with_absolute(soup, prefix, root, content_path):
+    for link in soup.find_all('a'):
+        link['href'] = calculate_absolute_url(
+            prefix, root, content_path, link['href'])
+
+    for img in soup.find_all('img'):
+        img['src'] = calculate_absolute_url(
+            prefix, root, content_path, img['src'])
+    return str(soup)
 
 
 def is_text_tag(tag):
@@ -69,8 +99,8 @@ def flatten_dir(initial_path):
 
 
 def blogfiles(filepaths):
-    # Avoid premature optimization: match all files in the
-    # subdirectory to see if they match.
+    # Match all files in the subdirectory to see if they match the pattern for
+    # blog posts.
     pattern = re.compile(r'([0-9]+)/([0-9]+)/([0-9]+)/.*/index.html$')
 
     for filepath in filepaths:
@@ -87,43 +117,97 @@ def blogfiles(filepaths):
             )
 
 
-Summary = collections.namedtuple(
-    'Summary', ['title', 'date', 'path', 'description'])
+HEntry = collections.namedtuple(
+    'HEntry', ['name', 'published', 'path', 'content', 'summary', 'photos'])
 
 
-def summary_from_path(root, path, date):
-    filepath = os.path.join(root, path)
+def summary_from_path(site_root, index_root, path, date):
+    filepath = os.path.join(index_root, path)
     with open(filepath, 'r', encoding='utf-8') as fb:
-        return extract_summary(path, date, fb)
+        return extract_summary(site_root, index_root, filepath, date, fb)
 
 
-def extract_summary(path, date, markup):
+def extract_summary(site_root, index_root, path, date, markup):
     doc = bs4.BeautifulSoup(markup, 'html5lib')
-    if doc.title is None:
+    replace_urls_with_absolute(doc, '/', site_root, path)
+
+    # Find the first h-entry.
+    # Getting just the first h-entry skips any inline replies.
+    entry = doc.find(class_='h-entry')
+    if not entry:
+        print(f'Skipping {path} because missing h-entry')
+        return None
+
+    title_elem = entry.find(class_='p-name')
+    if not title_elem:
         print(f'Skipping {path} because missing title')
         return None
-    title = doc.title.string
-    if doc.body is None:
-        print(f'Skipping {path} because has no body')
+
+    title = None
+    if (
+        'e-content' not in title_elem['class']
+        and 'p-content' not in title_elem['class']
+    ):
+        title = title_elem.string
+
+    # It there is a published element, parse the datetime from that, otherwise,
+    # use the datetime from the filepath.
+    published_elem = entry.find(class_='dt-published')
+    published = None
+    if published_elem:
+        if published_elem.has_attr('datetime'):
+            published = dateutil.parser.parse(published_elem['datetime'])
+        else:
+            published = dateutil.parser.parse(published_elem.string)
+
+    if published and published.date() != date.date():
+        print(f'Warning: {path} path date doesn\'t match {published}.')
+    date = published or date
+
+    content = None
+    content_elem = entry.find(class_='e-content')
+    if content_elem:
+        content = ''.join(map(str, content_elem.children))
+    else:
+        content_elem = entry.find(class_='p-content')
+        if content_elem:
+            content = content_elem.string
+
+    if content is None:
+        print(f'Skipping {path} because has no e-content or p-content')
         return None
 
-    # Destroy the header from the parse tree,
-    # since we don't want it in the summary.
-    header = doc.body.find(
-            attrs={'id': lambda s: s == 'content-header'})
-    if header is not None:
-        header.decompose()
-    description = ' '.join((
-        s.string
-        for s in
-        doc.body.find_all(text=is_text_tag)
-        ))[:512]
-    return Summary(title, date, f'{os.path.dirname(path)}/', description)
+    summary = None
+    summary_elem = (
+        entry.find(class_='e-summary') or entry.find(class_='p-summary')
+    )
+    if summary_elem:
+        summary = ''.join(map(str, summary_elem.children))
+
+    photo_elems_root = entry.find_all(
+        class_='u-photo',
+        # Find only direct children so as not to pick up photos from the
+        # h-card.
+        recursive=False)
+    photo_elems_content = content_elem.find_all(class_='u-photo')
+    photos = []
+    for photo_elem in itertools.chain(photo_elems_root, photo_elems_content):
+        photos.append({
+            'id': photo_elem.attrs.get('id'),
+            'src': photo_elem['src'],
+            'alt': photo_elem.attrs.get('alt', ''),
+            'is_pixel_art': 'u-pixel-art' in photo_elem['class'],
+        })
+
+    relative_path = os.path.relpath(path, start=index_root)
+    return HEntry(
+        title, date, f'{os.path.dirname(relative_path)}/', content,
+        summary=summary, photos=photos)
 
 
-def summaries_from_paths(root, paths):
+def summaries_from_paths(site_root, index_root, paths):
     for path in paths:
-        summary = summary_from_path(root, *path)
+        summary = summary_from_path(site_root, index_root, *path)
         if summary is not None:
             yield summary
 
@@ -180,7 +264,7 @@ def split_region(contents, region_name):
                 raise ValueError(
                     f'Found duplicate start line "{start_line}" at line '
                     f'{line_no + 1}.')
-            found_start= True
+            found_start = True
 
     # Couldn't find the region, so raise an error.
     if not found_start:
@@ -206,30 +290,33 @@ def replace_region(contents, region_name, body):
 
 def main(args):
     indexed_dir = args.indexed_dir
-    template_path = args.template
-    if template_path is None:
-        template_path = os.path.join(indexed_dir, 'index.jinja2.html')
     index_path = args.index
     if index_path is None:
         index_path = os.path.join(indexed_dir, 'index.html')
 
+    template_path = args.template
+    if template_path is None:
+        template_path = '{}.jinja2'.format(index_path)
+
     jinja_template = load_template(template_path)
     blog_paths = blogfiles(flatten_dir(indexed_dir))
-    posts = [
-        summary
-        for summary in summaries_from_paths(indexed_dir, blog_paths)
+    entries = [
+        entry
+        for entry in summaries_from_paths(
+            os.getcwd(), indexed_dir, blog_paths)
     ]
 
-    # Sort the posts by date.
+    # Sort the entries by date.
     # I reverse it because I want most-recent posts to appear first.
-    posts.sort(key=lambda post: post.date, reverse=True)
+    entries.sort(key=lambda entry: entry.published, reverse=True)
 
     # Update the index file by replacing the <!--START/END INDEX--> region.
     with open(index_path, 'r+', encoding='utf-8') as index_file:
         original_content = index_file.read()
-        new_index = jinja_template.render(posts=posts) + '\n'
+        new_index = jinja_template.render(entries=entries) + '\n'
         new_content = replace_region(original_content, 'INDEX', new_index)
         index_file.seek(0)
+        index_file.truncate(0)  # Delete existing contents.
         index_file.write(new_content)
 
 
