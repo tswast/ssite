@@ -17,8 +17,9 @@ from __future__ import print_function
 import argparse
 import sys
 
-from . import index
 from . import clean
+from . import header
+from . import index
 from . import rmblock
 
 
@@ -40,11 +41,17 @@ def main():
         'beta_rmblock', help=_module_help(rmblock))
     rmblock.add_cli_args(rmblock_parser)
 
+    header_parser = subparsers.add_parser(
+        'beta_header', help=_module_help(header))
+    header.add_cli_args(header_parser)
+
     args = parser.parse_args()
     if args.command == 'clean':
         clean.main(args)
     elif args.command == 'index':
         index.main(args)
+    elif args.command == 'beta_header':
+        header.main(args)
     elif args.command == 'beta_rmblock':
         rmblock.main(args)
     else:
