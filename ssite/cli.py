@@ -20,6 +20,7 @@ import sys
 from . import clean
 from . import header
 from . import index
+from . import note
 from . import rmblock
 
 
@@ -37,12 +38,16 @@ def main():
     clean_parser = subparsers.add_parser('clean', help=_module_help(clean))
     clean.add_cli_args(clean_parser)
 
+    note_parser = subparsers.add_parser(
+        'note', help=_module_help(note))
+    note.add_cli_args(note_parser)
+
     rmblock_parser = subparsers.add_parser(
         'beta_rmblock', help=_module_help(rmblock))
     rmblock.add_cli_args(rmblock_parser)
 
     header_parser = subparsers.add_parser(
-        'beta_header', help=_module_help(header))
+        'header', help=_module_help(header))
     header.add_cli_args(header_parser)
 
     args = parser.parse_args()
@@ -50,7 +55,9 @@ def main():
         clean.main(args)
     elif args.command == 'index':
         index.main(args)
-    elif args.command == 'beta_header':
+    elif args.command == 'note':
+        note.main(args)
+    elif args.command == 'header':
         header.main(args)
     elif args.command == 'beta_rmblock':
         rmblock.main(args)
