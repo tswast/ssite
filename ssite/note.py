@@ -18,7 +18,10 @@
 """Create a new note-type post."""
 
 import datetime
+<<<<<<< HEAD
 import logging
+=======
+>>>>>>> 971ce07... WorkInProgress: Add command for creating a pixel-art note.
 import os
 import os.path
 import re
