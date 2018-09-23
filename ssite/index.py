@@ -67,6 +67,14 @@ def replace_urls_with_absolute(soup, prefix, root, content_path):
     for img in soup.find_all('img'):
         img['src'] = calculate_absolute_url(
             prefix, root, content_path, img['src'])
+
+    # Video embeds.
+    for source in soup.find_all('source'):
+        source['src'] = calculate_absolute_url(
+            prefix, root, content_path, source['src'])
+    for video in soup.find_all('video'):
+        video['poster'] = calculate_absolute_url(
+            prefix, root, content_path, video['poster'])
     return str(soup)
 
 
@@ -125,6 +133,16 @@ def summary_from_path(site_root, index_root, path, date):
     filepath = os.path.join(index_root, path)
     with open(filepath, 'r', encoding='utf-8') as fb:
         return extract_summary(site_root, index_root, filepath, date, fb)
+
+
+def photo_template(photo_elem, is_in_content=False):
+    return  {
+        'id': photo_elem.attrs.get('id'),
+        'src': photo_elem['src'],
+        'alt': photo_elem.attrs.get('alt', ''),
+        'is_pixel_art': 'u-pixel-art' in photo_elem['class'],
+        'is_in_content': is_in_content,
+    }
 
 
 def extract_summary(site_root, index_root, path, date, markup):
@@ -191,13 +209,10 @@ def extract_summary(site_root, index_root, path, date, markup):
         recursive=False)
     photo_elems_content = content_elem.find_all(class_='u-photo')
     photos = []
-    for photo_elem in itertools.chain(photo_elems_root, photo_elems_content):
-        photos.append({
-            'id': photo_elem.attrs.get('id'),
-            'src': photo_elem['src'],
-            'alt': photo_elem.attrs.get('alt', ''),
-            'is_pixel_art': 'u-pixel-art' in photo_elem['class'],
-        })
+    for photo_elem in photo_elems_root:
+        photos.append(photo_template(photo_elem, is_in_content=False))
+    for photo_elem in photo_elems_content:
+        photos.append(photo_template(photo_elem, is_in_content=True))
 
     relative_path = os.path.relpath(path, start=index_root)
     return HEntry(
