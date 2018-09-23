@@ -23,48 +23,6 @@ import pytest
 import ssite.index
 
 
-@pytest.mark.parametrize('prefix,root,content_path,path,expected', [
-    (
-        'https://example.com/',
-        '/my/site/',
-        '/my/site/blog/entry/',
-        './',
-        'https://example.com/blog/entry/',
-    ),
-    (
-        'https://example.com/',
-        '/my/site/',
-        '/my/site/blog/entry/',
-        '../',
-        'https://example.com/blog/',
-    ),
-    (
-        'https://example.com/',
-        '/my/site/',
-        '/my/site/blog/entry/',
-        '/blog/entry/',
-        'https://example.com/blog/entry/',
-    ),
-    (
-        'https://example.com/',
-        '/my/site/',
-        '/my/site/blog/entry/',
-        'image.png',
-        'https://example.com/blog/entry/image.png',
-    ),
-    (
-        'https://example.com/',
-        '/my/site/',
-        '/my/site/blog/entry/',
-        '/blog/entry/image.png',
-        'https://example.com/blog/entry/image.png',
-    ),
-])
-def test_calculate_absolute_url(prefix, root, content_path, path, expected):
-    got = ssite.index.calculate_absolute_url(prefix, root, content_path, path)
-    assert got == expected
-
-
 def test_flatten_dir():
     test_dir = os.path.dirname(os.path.abspath(__file__))
     filepaths = tuple(sorted(ssite.index.flatten_dir(

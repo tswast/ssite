@@ -33,27 +33,30 @@ logger = logging.getLogger(__name__)
 
 
 def render_note(template, note, published, pixelart_filename=None):
-    soup = bs4.BeautifulSoup(note, 'html5lib')
+    soup = bs4.BeautifulSoup(note, "html5lib")
     return template.render(
-        note=note, note_text=soup.text, published=published,
-        pixelarts=[pixelart_filename] if pixelart_filename else [])
+        note=note,
+        note_text=soup.text,
+        published=published,
+        pixelarts=[pixelart_filename] if pixelart_filename else [],
+    )
 
 
 def add_note(template_path, note, published, pixelart_path=None):
     destination_dir = os.path.join(
-        published.strftime('%Y'),
-        published.strftime('%m'),
-        published.strftime('%d'),
+        published.strftime("%Y"),
+        published.strftime("%m"),
+        published.strftime("%d"),
         # Assume that notes aren't added more than once per second to use the
         # existence of the destination directory as a way to make adding a note
         # idempotent.
-        'note-{}'.format(published.strftime('%H%M%S')))
+        "note-{}".format(published.strftime("%H%M%S")),
+    )
     try:
         os.makedirs(destination_dir)
     except FileExistsError as exc:
         logger.warning(
-            'Not adding note. '
-            'Destination directory already exists: {}'.format(exc)
+            "Not adding note. " "Destination directory already exists: {}".format(exc)
         )
         return
 
@@ -61,16 +64,16 @@ def add_note(template_path, note, published, pixelart_path=None):
         pixelart_filename = None
         if pixelart_path:
             pixelart_filename = os.path.basename(pixelart_path)
-            shutil.copy(
-                pixelart_path, os.path.join(destination_dir, pixelart_filename))
+            shutil.copy(pixelart_path, os.path.join(destination_dir, pixelart_filename))
 
-        with open(template_path, 'r', encoding='utf-8') as ft:
+        with open(template_path, "r", encoding="utf-8") as ft:
             note_template = jinja2.Template(ft.read())
 
-        note_path = os.path.join(destination_dir, 'index.html')
+        note_path = os.path.join(destination_dir, "index.html")
         content = render_note(
-            note_template, note, published, pixelart_filename=pixelart_filename)
-        with open(note_path, 'w', encoding='utf-8') as out_file:
+            note_template, note, published, pixelart_filename=pixelart_filename
+        )
+        with open(note_path, "w", encoding="utf-8") as out_file:
             out_file.write(content)
     except Exception:
         # We failed to add the note, so remove the directory so that we can try
@@ -85,20 +88,17 @@ def main(args):
     else:
         published = datetime.datetime.now()
 
-    add_note(
-        args.template_path, args.note, published, pixelart_path=args.pixelart)
+    add_note(args.template_path, args.note, published, pixelart_path=args.pixelart)
 
 
 def add_cli_args(parser):
-    parser.add_argument('--pixelart', help='Path to pixel art image for note.')
+    parser.add_argument("--pixelart", help="Path to pixel art image for note.")
     parser.add_argument(
-        '--published_date',
+        "--published_date",
         help=(
-            'Date-time that the note was published. Notes are assumed to be '
-            'published at most once per second.'
+            "Date-time that the note was published. Notes are assumed to be "
+            "published at most once per second."
         ),
     )
-    parser.add_argument(
-        'template_path', help='Path to note template (jinja2).')
-    parser.add_argument('note', help='Text or HTML content for note post.')
-
+    parser.add_argument("template_path", help="Path to note template (jinja2).")
+    parser.add_argument("note", help="Text or HTML content for note post.")

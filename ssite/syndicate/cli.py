@@ -12,6 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from pkg_resources import get_distribution
+"""Commands to syndicate content to other platforms."""
 
-__version__ = get_distribution("ssite").version
+from . import rss
+
+
+def _module_help(module):
+    return module.__doc__.split("\n")[0]
+
+
+def add_cli_args(parser):
+    subparsers = parser.add_subparsers(title="syndication commands", dest="syndicate")
+    rss_parser = subparsers.add_parser("rss", help=_module_help(rss))
+    rss.add_cli_args(rss_parser)
+
+
+def main(args):
+    rss.main(args)

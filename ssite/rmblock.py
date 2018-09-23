@@ -26,7 +26,7 @@ def remove_blocks(contents, start_regex, end_regex):
     end_prog = re.compile(end_regex)
     block_started = False
 
-    for line in contents.split('\n'):
+    for line in contents.split("\n"):
         if block_started:
             # Stop skipping lines when the end is reached.
             if end_prog.search(line):
@@ -40,22 +40,20 @@ def remove_blocks(contents, start_regex, end_regex):
 
         output_lines.append(line)
 
-    return '\n'.join(output_lines)
+    return "\n".join(output_lines)
 
 
 def main(args):
     content_paths = args.content_path
     for content_path in content_paths:
-        with open(content_path, 'r', encoding='utf-8') as in_file:
+        with open(content_path, "r", encoding="utf-8") as in_file:
             content = in_file.read()
         content = remove_blocks(content, args.start_regex, args.end_regex)
-        with open(content_path, 'w', encoding='utf-8') as out_file:
+        with open(content_path, "w", encoding="utf-8") as out_file:
             out_file.write(content)
 
 
 def add_cli_args(parser):
-    parser.add_argument(
-        'start_regex', help='regex indicating start of a block')
-    parser.add_argument('end_regex', help='regex indicating end of a block')
-    parser.add_argument(
-        'content_path', help='path file(s) to update', nargs='+')
+    parser.add_argument("start_regex", help="regex indicating start of a block")
+    parser.add_argument("end_regex", help="regex indicating end of a block")
+    parser.add_argument("content_path", help="path file(s) to update", nargs="+")
