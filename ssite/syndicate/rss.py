@@ -116,6 +116,7 @@ def syndicate_images(soup, syndication_url, output_dir, site_root, content_path)
 
         if (
             # Don't try to resize SVGs or other non-bitmap formats.
+            # TODO: what other image formats should we resize?
             extension in (".png", ".gif", ".jpg", ".jpeg")
             # Keep thumbnails at their original resolution.
             and not img_props["is_thumbnail"]
@@ -124,7 +125,6 @@ def syndicate_images(soup, syndication_url, output_dir, site_root, content_path)
                 destination_dir, "resized-600px{}".format(extension)
             )
         else:
-            # TODO: what other image formats should we resize?
             # TODO: render SVGs?
             destination_resized = destination_original
 
@@ -133,9 +133,9 @@ def syndicate_images(soup, syndication_url, output_dir, site_root, content_path)
                 local_path, destination_resized, is_pixel_art=img_props["is_pixel_art"]
             )
 
-        # TODO: Use syndication URL so that they are absolute.
-        img["src"] = "/{}".format(
-            os.path.relpath(destination_resized, start=output_dir)
+        img["src"] = "{}{}".format(
+            syndication_url,
+            os.path.relpath(destination_resized, start=output_dir),
         )
 
 
