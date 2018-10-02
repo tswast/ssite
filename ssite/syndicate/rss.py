@@ -116,6 +116,9 @@ def syndicate_images(soup, syndication_url, output_dir, site_root, content_path)
         if not os.path.exists(destination_original):
             shutil.copy(local_path, destination_original)
 
+        width = None
+        height = None
+
         if (
             # Don't try to resize SVGs or other non-bitmap formats.
             # TODO: what other image formats should we resize?
@@ -126,25 +129,28 @@ def syndicate_images(soup, syndication_url, output_dir, site_root, content_path)
             destination_resized = os.path.join(
                 destination_dir, "resized-600px{}".format(extension)
             )
+
+            if not os.path.exists(destination_resized):
+                width, height = resize_image(
+                    local_path, destination_resized, is_pixel_art=img_props["is_pixel_art"]
+                )
+            else:
+                # Already resized, grab the image size.
+                im = Image.open(destination_resized)
+                width, height = im.size
+
         else:
             # TODO: render SVGs?
             destination_resized = destination_original
-
-        if not os.path.exists(destination_resized):
-            width, height = resize_image(
-                local_path, destination_resized, is_pixel_art=img_props["is_pixel_art"]
-            )
-        else:
-            # Already resized, grab the image size.
-            im = Image.open(original_path)
-            width, height = im.size
 
         img["src"] = "{}{}".format(
             syndication_url,
             os.path.relpath(destination_resized, start=output_dir),
         )
-        img["height"] = str(height)
-        img["width"] = str(width)
+        if height:
+            img["height"] = str(height)
+        if width:
+            img["width"] = str(width)
 
 
 def replace_urls_with_absolute(soup, prefix, root, content_path):
