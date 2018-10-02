@@ -34,25 +34,25 @@ import bs4
 def extract_redirect(href):
     url = urllib.parse.urlsplit(href)
 
-    if url.netloc == 'www.google.com':
+    if url.netloc == "www.google.com":
         query = urllib.parse.parse_qs(url.query)
-        return query.get('q')
+        return query.get("q")
 
     # Could not find redirect.
     return None
 
 
 def unredirect_links(a_tag):
-    if not a_tag.has_attr('href') or not a_tag['href']:
+    if not a_tag.has_attr("href") or not a_tag["href"]:
         return
 
-    redirect = extract_redirect(a_tag.get_attribute_list('href')[0])
+    redirect = extract_redirect(a_tag.get_attribute_list("href")[0])
     if redirect:
-        a_tag['href'] = redirect
+        a_tag["href"] = redirect
 
 
 def remove_html_cruft(text):
-    soup = bs4.BeautifulSoup(text, 'html.parser')
+    soup = bs4.BeautifulSoup(text, "html.parser")
 
     # Loop until we have cleaned up all tags. We can't do it in a single
     # pass since we are modifying the descendents tree as we go.
@@ -75,41 +75,41 @@ def remove_html_cruft(text):
 
             # Remove unwanted tags.
             # Remove empty paragraphs.
-            if tag.name == 'p' and not tag.contents:
+            if tag.name == "p" and not tag.contents:
                 tag.decompose()
                 isnotclean = True
                 continue
             # Remove any style elements.
-            if tag.name == 'style':
+            if tag.name == "style":
                 tag.decompose()
                 isnotclean = True
                 continue
             # Remove any span elements.
-            if tag.name == 'span':
+            if tag.name == "span":
                 tag.unwrap()
                 isnotclean = True
                 continue
 
             # Clean up desired tags.
             # Clean up links.
-            if tag.name == 'a':
+            if tag.name == "a":
                 unredirect_links(tag)
 
             # Remove any styles or classes.
-            del tag['id']
-            del tag['class']
-            del tag['style']
+            del tag["id"]
+            del tag["class"]
+            del tag["style"]
 
     return soup.prettify()
 
 
 def remove_closing_tags(text):
-    text = re.sub(r'<p>\s*', '<p>', text)
-    return re.sub(r'\s*</p>', '\n', text)
+    text = re.sub(r"<p>\s*", "<p>", text)
+    return re.sub(r"\s*</p>", "\n", text)
 
 
 def cleanhtml(input_, output=None):
-    with open(input_, 'r', encoding='utf-8') as f:
+    with open(input_, "r", encoding="utf-8") as f:
         html_doc = f.read()
 
     html_clean = remove_html_cruft(html_doc)
@@ -119,21 +119,20 @@ def cleanhtml(input_, output=None):
         print(html_clean)
         return
 
-    with open(output, 'w', encoding='utf-8') as f:
+    with open(output, "w", encoding="utf-8") as f:
         f.write(html_clean)
 
 
 def add_cli_args(parser):
-    parser.add_argument('input', help='path to html document to clean')
-    parser.add_argument(
-        '-o', '--output', help='path to output cleaned html document')
+    parser.add_argument("input", help="path to html document to clean")
+    parser.add_argument("-o", "--output", help="path to output cleaned html document")
 
 
 def main(args):
     cleanhtml(args.input, output=args.output)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     add_cli_args(parser)
     args = parser.parse_args()

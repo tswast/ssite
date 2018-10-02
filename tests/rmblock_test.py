@@ -18,33 +18,29 @@ from ssite import rmblock
 
 
 @pytest.mark.parametrize(
-    'content,start_block,end_block,expected',
+    "content,start_block,end_block,expected",
     [
+        ("No\nblocks\nhere\n", "\[START\]$", "\[END\]$", "No\nblocks\nhere\n"),
         (
-            'No\nblocks\nhere\n',
-            '\[START\]$',
-            '\[END\]$',
-            'No\nblocks\nhere\n',
+            "Some\nblock\n[START]\nwith hidden\ncontent\n[END]\nhere\n",
+            "\[START\]$",
+            "\[END\]$",
+            "Some\nblock\nhere\n",
         ),
         (
-            'Some\nblock\n[START]\nwith hidden\ncontent\n[END]\nhere\n',
-            '\[START\]$',
-            '\[END\]$',
-            'Some\nblock\nhere\n',
+            "Block\n [START]\nwith whitespace\ncontent\n [END]\nhere\n",
+            "\[START\]$",
+            "\[END\]$",
+            "Block\nhere\n",
         ),
         (
-            'Block\n [START]\nwith whitespace\ncontent\n [END]\nhere\n',
-            '\[START\]$',
-            '\[END\]$',
-            'Block\nhere\n',
+            "More\n[START]\nhidden\n[END]\nblocks\n[START]\nin\n[END]\nhere\n",
+            "\[START\]$",
+            "\[END\]$",
+            "More\nblocks\nhere\n",
         ),
-        (
-            'More\n[START]\nhidden\n[END]\nblocks\n[START]\nin\n[END]\nhere\n',
-            '\[START\]$',
-            '\[END\]$',
-            'More\nblocks\nhere\n',
-        ),
-    ])
+    ],
+)
 def test_remove_blocks(content, start_block, end_block, expected):
     got = rmblock.remove_blocks(content, start_block, end_block)
     assert got == expected

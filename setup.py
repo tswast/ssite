@@ -16,42 +16,38 @@ import setuptools
 
 
 description = (
-    'Ssite is not a static site generator. '
-    'It is a collection of scripts to maintain a static site.'
+    "Ssite is not a static site generator. "
+    "It is a collection of scripts to maintain a static site."
 )
-version = '0.3.0.dev'
+version = "0.3.0.dev"
 
 
-with open('README.md', 'r') as fh:
+with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name='ssite',
+    name="ssite",
     version=version,
-    author='Tim Swast',
-    author_email='swast@google.com',
+    author="Tim Swast",
+    author_email="swast@google.com",
     description=description,
     long_description=long_description,
-    long_description_content_type='text/markdown',
-    url='https://github.com/tswast/ssite',
+    long_description_content_type="text/markdown",
+    url="https://github.com/tswast/ssite",
     install_requires=[
-        'beautifulsoup4>=4.4.1,<5.0dev',
-        'html5lib>=0.9999999,<2.0dev',
-        'Jinja2>=2.8,<3.0dev',
-        'setuptools>=28.0.0',
-        'python-dateutil>=2.0.0,<3.0dev',
+        "beautifulsoup4>=4.4.1,<5.0dev",
+        "html5lib>=0.9999999,<2.0dev",
+        "Jinja2>=2.8,<3.0dev",
+        "setuptools>=28.0.0",
+        "python-dateutil>=2.0.0,<3.0dev",
     ],
-    entry_points={
-        'console_scripts': [
-            'ssite=ssite.cli:main'
-        ],
-    },
+    entry_points={"console_scripts": ["ssite=ssite.cli:main"]},
     packages=setuptools.find_packages(),
     classifiers=(
-        'Development Status :: 3 - Alpha',
-        'Programming Language :: Python :: 3',
-        'License :: OSI Approved :: Apache Software License',
-        'Operating System :: OS Independent',
-        'Topic :: Internet',
+        "Development Status :: 3 - Alpha",
+        "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: Apache Software License",
+        "Operating System :: OS Independent",
+        "Topic :: Internet",
     ),
 )

@@ -22,47 +22,50 @@ from . import header
 from . import index
 from . import note
 from . import rmblock
+import ssite.syndicate.cli
 
 
 def _module_help(module):
-    return module.__doc__.split('\n')[0]
+    return module.__doc__.split("\n")[0]
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    subparsers = parser.add_subparsers(title='commands', dest='command')
+    subparsers = parser.add_subparsers(title="commands", dest="command")
 
-    index_parser = subparsers.add_parser('index', help=_module_help(index))
+    index_parser = subparsers.add_parser("index", help=_module_help(index))
     index.add_cli_args(index_parser)
 
-    clean_parser = subparsers.add_parser('clean', help=_module_help(clean))
+    clean_parser = subparsers.add_parser("clean", help=_module_help(clean))
     clean.add_cli_args(clean_parser)
 
-    note_parser = subparsers.add_parser(
-        'note', help=_module_help(note))
+    note_parser = subparsers.add_parser("note", help=_module_help(note))
     note.add_cli_args(note_parser)
 
-    rmblock_parser = subparsers.add_parser(
-        'beta_rmblock', help=_module_help(rmblock))
+    rmblock_parser = subparsers.add_parser("beta_rmblock", help=_module_help(rmblock))
     rmblock.add_cli_args(rmblock_parser)
 
-    header_parser = subparsers.add_parser(
-        'header', help=_module_help(header))
+    header_parser = subparsers.add_parser("header", help=_module_help(header))
     header.add_cli_args(header_parser)
 
+    syndicate_parser = subparsers.add_parser(
+        "syndicate", help=_module_help(ssite.syndicate.cli)
+    )
+    ssite.syndicate.cli.add_cli_args(syndicate_parser)
+
     args = parser.parse_args()
-    if args.command == 'clean':
+    if args.command == "clean":
         clean.main(args)
-    elif args.command == 'index':
+    elif args.command == "index":
         index.main(args)
-    elif args.command == 'note':
+    elif args.command == "note":
         note.main(args)
-    elif args.command == 'header':
+    elif args.command == "header":
         header.main(args)
-    elif args.command == 'beta_rmblock':
+    elif args.command == "syndicate":
+        ssite.syndicate.cli.main(args)
+    elif args.command == "beta_rmblock":
         rmblock.main(args)
     else:
-        print(
-            'Got unknown command "{}".'.format(args.command),
-            file=sys.stderr)
+        print('Got unknown command "{}".'.format(args.command), file=sys.stderr)
         parser.print_help()
