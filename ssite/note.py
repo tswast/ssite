@@ -42,8 +42,9 @@ def render_note(template, note, published, pixelart_filename=None):
     )
 
 
-def add_note(template_path, note, published, pixelart_path=None):
+def add_note(template_path, note, published, pixelart_path=None, blog_dir="."):
     destination_dir = os.path.join(
+        blog_dir,
         published.strftime("%Y"),
         published.strftime("%m"),
         published.strftime("%d"),
@@ -88,10 +89,17 @@ def main(args):
     else:
         published = datetime.datetime.now()
 
-    add_note(args.template_path, args.note, published, pixelart_path=args.pixelart)
+    add_note(
+        args.template_path,
+        args.note,
+        published,
+        pixelart_path=args.pixelart,
+        blog_dir=args.blog_dir,
+    )
 
 
 def add_cli_args(parser):
+    parser.add_argument("--blog_dir", help="Path to blog directory.", default=".")
     parser.add_argument("--pixelart", help="Path to pixel art image for note.")
     parser.add_argument(
         "--published_date",
