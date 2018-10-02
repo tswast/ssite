@@ -85,9 +85,6 @@ def syndicate_images(soup, syndication_url, output_dir, site_root, content_path)
 
     Modifies image source attributes in``soup``.
     """
-    # TODO: Resize images.
-    #       Copy to syndicate directory.
-    #       Update URLs.
     for img in soup.find_all("img"):
         img_props = ssite.hentry.photo_template(img)
         local_path = ssite.blog.calculate_filepath(site_root, content_path, img["src"])
