@@ -129,7 +129,9 @@ def syndicate_images(soup, syndication_url, output_dir, site_root, content_path)
 
             if not os.path.exists(destination_resized):
                 width, height = resize_image(
-                    local_path, destination_resized, is_pixel_art=img_props["is_pixel_art"]
+                    local_path,
+                    destination_resized,
+                    is_pixel_art=img_props["is_pixel_art"],
                 )
             else:
                 # Already resized, grab the image size.
@@ -141,8 +143,7 @@ def syndicate_images(soup, syndication_url, output_dir, site_root, content_path)
             destination_resized = destination_original
 
         img["src"] = "{}{}".format(
-            syndication_url,
-            os.path.relpath(destination_resized, start=output_dir),
+            syndication_url, os.path.relpath(destination_resized, start=output_dir)
         )
         if height:
             img["height"] = str(height)
