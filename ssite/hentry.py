@@ -43,6 +43,8 @@ def photo_template(photo_elem, is_in_content=False):
         "is_pixel_art": is_pixel_art,
         "is_thumbnail": is_thumbnail,
         "is_in_content": is_in_content,
+        "width": photo_elem.attrs.get("width"),
+        "height": photo_elem.attrs.get("height"),
     }
 
 

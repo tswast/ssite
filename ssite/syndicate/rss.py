@@ -77,6 +77,8 @@ def resize_image(original_path, resized_path, resize_width=600, is_pixel_art=Tru
     else:
         resize_static_image(im, resized_path, resize_to, is_pixel_art=is_pixel_art)
 
+    return resize_to
+
 
 def syndicate_images(soup, syndication_url, output_dir, site_root, content_path):
     """Write syndicated images to ``output_dir``.
@@ -129,14 +131,20 @@ def syndicate_images(soup, syndication_url, output_dir, site_root, content_path)
             destination_resized = destination_original
 
         if not os.path.exists(destination_resized):
-            resize_image(
+            width, height = resize_image(
                 local_path, destination_resized, is_pixel_art=img_props["is_pixel_art"]
             )
+        else:
+            # Already resized, grab the image size.
+            im = Image.open(original_path)
+            width, height = im.size
 
         img["src"] = "{}{}".format(
             syndication_url,
             os.path.relpath(destination_resized, start=output_dir),
         )
+        img["height"] = str(height)
+        img["width"] = str(width)
 
 
 def replace_urls_with_absolute(soup, prefix, root, content_path):
