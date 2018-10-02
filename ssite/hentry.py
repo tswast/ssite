@@ -113,4 +113,4 @@ def extract_hentry(path, path_date, doc):
     for photo_elem in photo_elems_content:
         photos.append(photo_template(photo_elem, is_in_content=True))
 
-    return HEntry(title, date, path, content, summary=summary, photos=photos)
+    return HEntry(title, date, path, content, summary=summary, photos=tuple(photos))

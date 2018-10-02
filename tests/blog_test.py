@@ -20,6 +20,20 @@ import pytest
 import ssite.blog
 
 
+def test_flatten_dir():
+    test_dir = os.path.dirname(os.path.abspath(__file__))
+    filepaths = tuple(
+        sorted(ssite.blog.flatten_dir(os.path.join(test_dir, "data", "testblog")))
+    )
+    assert filepaths == (
+        "2012/01/01/index.html",
+        "2012/01/01/other.html",
+        "2012/04/30/index.html",
+        "2012/index.html",
+        "2013/12/31/index.html",
+    )
+
+
 @pytest.mark.parametrize(
     "prefix,root,content_path,path,expected",
     [

@@ -20,27 +20,18 @@ import os.path
 
 import pytest
 
+import ssite.hentry
 import ssite.index
-
-
-def test_flatten_dir():
-    test_dir = os.path.dirname(os.path.abspath(__file__))
-    filepaths = tuple(
-        sorted(ssite.index.flatten_dir(os.path.join(test_dir, "data", "testblog")))
-    )
-    assert filepaths == (
-        "2012/01/01/index.html",
-        "2012/01/01/other.html",
-        "2012/04/30/index.html",
-        "2012/index.html",
-        "2013/12/31/index.html",
-    )
 
 
 def test_extract_summary_missing_title_returns_none():
     assert (
         ssite.index.extract_summary(
-            "some/path", datetime.datetime(2016, 5, 5), "<!DOCTYPE html>Hello"
+            "site-root",
+            "site-root/blog-root",
+            "site-root/blog-root/2016/05/05/note/index.html",
+            datetime.datetime(2016, 5, 5),
+            "<!DOCTYPE html>Hello",
         )
         is None
     )
@@ -48,15 +39,22 @@ def test_extract_summary_missing_title_returns_none():
 
 def test_extract_summary_returns_summary():
     assert ssite.index.extract_summary(
-        "some/path/index.html",
+        "site-root",
+        "site-root/blog-root",
+        "site-root/blog-root/2016/05/05/note/index.html",
         datetime.datetime(2016, 5, 5),
         (
             '<!DOCTYPE html><article class="h-entry">'
             '<span class="p-name">Hello</span>'
             '<div class="p-content">Some beginning text.</div>'
         ),
-    ) == ssite.index.HEntry(
-        "Hello", datetime.datetime(2016, 5, 5), "some/path/", "Some beginning text."
+    ) == ssite.hentry.HEntry(
+        name="Hello",
+        published=datetime.datetime(2016, 5, 5),
+        path="2016/05/05/note/",
+        content="Some beginning text.",
+        summary=None,
+        photos=(),
     )
 
 
