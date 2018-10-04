@@ -23,6 +23,7 @@ import collections
 import logging
 
 import dateutil.parser
+import pytz
 
 
 logger = logging.getLogger(__name__)
@@ -48,7 +49,7 @@ def photo_template(photo_elem, is_in_content=False):
     }
 
 
-def extract_hentry(path, path_date, doc):
+def extract_hentry(path, path_date, doc, default_timezone="America/Los_Angeles"):
     # Find the first h-entry.
     # Getting just the first h-entry skips any inline replies.
     entry = doc.find(class_="h-entry")
@@ -80,6 +81,10 @@ def extract_hentry(path, path_date, doc):
 
     if published and published.date() != path_date.date():
         logger.warn(f"Date in {path} doesn't match dt-published {published}")
+
+    if published and not published.tzinfo:
+        tz = pytz.timezone(default_timezone)
+        published = tz.localize(published)
     date = published or path_date
 
     content = None

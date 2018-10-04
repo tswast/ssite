@@ -27,6 +27,7 @@ import shutil
 import bs4
 import dateutil.parser
 import jinja2
+import pytz
 
 
 logger = logging.getLogger(__name__)
@@ -88,6 +89,13 @@ def main(args):
         published = dateutil.parser.parse(args.published_date)
     else:
         published = datetime.datetime.now()
+        # No need for microsecond-level precision.
+        published = published.replace(microsecond=0)
+
+    # Use specified timezone if no timezone is specified.
+    if not published.tzinfo:
+        tz = pytz.timezone(args.published_timezone)
+        published = tz.localize(published)
 
     add_note(
         args.template_path,
@@ -107,6 +115,11 @@ def add_cli_args(parser):
             "Date-time that the note was published. Notes are assumed to be "
             "published at most once per second."
         ),
+    )
+    parser.add_argument(
+        "--published_timezone",
+        help="What timezone to use when interpreting the --published_date argument?",
+        default="America/Los_Angeles",
     )
     parser.add_argument("template_path", help="Path to note template (jinja2).")
     parser.add_argument("note", help="Text or HTML content for note post.")
