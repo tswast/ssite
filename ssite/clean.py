@@ -113,8 +113,10 @@ def remove_extra_whitespace(text):
     text = re.sub(r"\n[ \t]+", "\n", text)
 
     # Whitespace around <a> tags is almost always unwanted.
-    text = re.sub(r"([(]?)\s*(<a[^>]*>)\s+", r"\1\2", text)
-    text = re.sub(r"\s+(</a>)\s*([).]?)", r"\1\2", text)
+    text = re.sub(r"(<a[^>]*>)\s+", r"\1", text)
+    text = re.sub(r"([(])\s*(<a[^>]*>)", r"\1\2", text)
+    text = re.sub(r"\s+(</a>)", r"\1", text)
+    text = re.sub(r"(</a>)\s*([).])", r"\1\2", text)
     return text
 
 

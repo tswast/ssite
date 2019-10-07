@@ -24,6 +24,10 @@ import ssite.clean
             '(\n  <a href="url.html">\n  Hello\n  </a>\n  )\n',
             '(<a href="url.html">Hello</a>)\n',
         ),
+        (
+            'some\n  <a href="url.html">\n  words\n  </a>\n to keep.\n',
+            'some\n<a href="url.html">words</a>\nto keep.\n',
+        ),
     )
 )
 def test_remove_extra_whitespace(before, expected):
