@@ -39,7 +39,7 @@ setuptools.setup(
         "html5lib>=0.9999999,<2.0dev",
         "Jinja2>=2.8,<3.0dev",
         "setuptools>=28.0.0",
-        "Pillow>=5.2.0,<6.0dev",
+        "Pillow>=5.2.0,<7.0dev",
         "python-dateutil>=2.0.0,<3.0dev",
         "pytz",
     ],
