@@ -108,12 +108,23 @@ def remove_closing_tags(text):
     return re.sub(r"\s*</p>", "\n", text)
 
 
+def remove_extra_whitespace(text):
+    # No indentation necessary for hand-written HTML.
+    text = re.sub(r"\n[ \t]+", "\n", text)
+
+    # Whitespace around <a> tags is almost always unwanted.
+    text = re.sub(r"([(]?)\s*(<a[^>]*>)\s+", r"\1\2", text)
+    text = re.sub(r"\s+(</a>)\s*([).]?)", r"\1\2", text)
+    return text
+
+
 def cleanhtml(input_, output=None):
     with open(input_, "r", encoding="utf-8") as f:
         html_doc = f.read()
 
     html_clean = remove_html_cruft(html_doc)
     html_clean = remove_closing_tags(html_clean)
+    html_clean = remove_extra_whitespace(html_clean)
 
     if output is None:
         print(html_clean)
