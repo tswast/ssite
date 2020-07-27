@@ -54,6 +54,8 @@ def replace_header(content_path, site, site_root, header_template):
         else:
             header_lines.append(line)
 
+    if not header_ended:
+        raise ValueError(f"no <title> tag found in {content_path}")
     previous_header = "\n".join(header_lines)
 
     canonical_link = None
