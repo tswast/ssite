@@ -19,7 +19,7 @@ description = (
     "Ssite is not a static site generator. "
     "It is a collection of scripts to maintain a static site."
 )
-version = "0.4.0"
+version = "0.4.1"
 
 
 with open("README.md", "r") as fh:
@@ -35,12 +35,12 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/tswast/ssite",
     install_requires=[
-        "beautifulsoup4>=4.4.1,<5.0dev",
-        "html5lib>=0.9999999,<2.0dev",
-        "Jinja2>=2.8,<3.0dev",
+        "beautifulsoup4",
+        "html5lib",
+        "Jinja2",
         "setuptools>=28.0.0",
-        "Pillow>=5.2.0,<7.0dev",
-        "python-dateutil>=2.0.0,<3.0dev",
+        "Pillow>=5.2.0",
+        "python-dateutil",
         "pytz",
     ],
     entry_points={"console_scripts": ["ssite=ssite.cli:main"]},
